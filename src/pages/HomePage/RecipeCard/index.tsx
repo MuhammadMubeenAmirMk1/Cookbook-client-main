@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import CreatorInfo from '../CreatorInfo';
-//import { saveRecipeToFavorites } from '../../../api';
 import { toggleFavorite } from '../../../api';
 
 interface RecipeCardProps {
   id: string;
   title: string;
   description: string;
+  ingredients: string[];
   imageUrl?: string;
   tags: string[];
   isFavorite: boolean;
@@ -21,6 +21,7 @@ const RecipeCard = ({
   id,
   title,
   description,
+  ingredients,
   imageUrl,
   tags,
   isFavorite,
@@ -30,20 +31,20 @@ const RecipeCard = ({
   const [favorite, setFavorite] = useState(isFavorite);
   const [loading, setLoading] = useState(false);
 
-const handleToggleFavorite = async () => {
-  try {
-    setLoading(true);
-    const response = await toggleFavorite(id);
-    const updatedFavorites = response.data.payload;
+  const handleToggleFavorite = async (): Promise<void> => {
+    try {
+      setLoading(true);
+      const response = await toggleFavorite(id);
+      const updatedFavorites = response.data.payload;
 
-    setFavorite(updatedFavorites.includes(id)); // update local favorite state
-    onToggleFavorite?.(updatedFavorites);       // sync with parent
-  } catch (error) {
-    console.error('Failed to toggle favorite:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+      setFavorite(updatedFavorites.includes(id));
+      onToggleFavorite?.(updatedFavorites);
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="rounded bg-white overflow-hidden shadow-2xl relative">
@@ -55,9 +56,8 @@ const handleToggleFavorite = async () => {
         />
       )}
 
-      {/* Favorite toggle button */}
       <button
-        onClick={handleToggleFavorite}
+        onClick={() => void handleToggleFavorite()}
         className="absolute top-2 right-2 text-2xl"
         disabled={loading}
         title={favorite ? 'Unfavorite' : 'Save to Favorites'}
@@ -73,7 +73,14 @@ const handleToggleFavorite = async () => {
 
       <div className="px-6 py-4">
         <div className="font-bold text-xl mb-2 break-words">{title}</div>
-        <p className="text-gray-700 text-base break-words">{description}</p>
+        <p className="text-gray-700 text-base break-words">
+          {description}
+        </p>
+        {ingredients.length > 0 && (
+          <p className="mt-2 text-sm text-gray-600">
+            <strong>Ingredients:</strong> {ingredients.join(', ')}
+          </p>
+        )}
       </div>
 
       <CreatorInfo name={creator.name} email={creator.email} />

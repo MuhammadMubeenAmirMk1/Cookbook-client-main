@@ -63,11 +63,12 @@ const HomePage = (): JSX.Element => {
   return (
     <div className="bg-zinc-200 min-h-screen">
       <div className="p-10 grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-5">
-        {sortedRecipes.map(({ _id, title, steps, imageUrl, tags, author }) => (
+        {sortedRecipes.map(({ _id, title,ingredients, steps, imageUrl, tags, author }) => (
           <RecipeCard
             key={_id}
             id={_id}
             title={title}
+            ingredients={ingredients}
             description={steps}
             imageUrl={imageUrl}
             tags={tags}
