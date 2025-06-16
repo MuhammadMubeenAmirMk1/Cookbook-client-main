@@ -91,6 +91,12 @@ const saveRecipeToFavorites = async (
   return await instance.post(`/recipes/${id}/save`);
 };
 
+const toggleFavorite = async (
+  id: string,
+): Promise<AxiosResponse<{ status: string; message: string; payload: string[] }>> => {
+  return await instance.post(`/recipes/${id}/save`);
+};
+
 export {
   register,
   login,
@@ -102,4 +108,5 @@ export {
   getRecipesByTags,
   addCommentToRecipe,
   saveRecipeToFavorites,
+  toggleFavorite,
 };

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import RecipeCard from './RecipeCard';
 import { getAllRecipes } from '../../api';
+import getUserFromLocalStorage from '../../utils/getUserFromLocalStorage';
 
 interface Recipe {
-  _id: string; // MongoDB's unique ID
+  _id: string;
   title: string;
   ingredients: string[];
   steps: string;
@@ -29,12 +30,19 @@ interface Recipe {
 
 const HomePage = (): JSX.Element => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchRecipes = async (): Promise<void> => {
       try {
         const response = await getAllRecipes();
-        setRecipes(response.data.payload);
+        const allRecipes = response.data.payload;
+        setRecipes(allRecipes);
+
+        const user = getUserFromLocalStorage();
+        if (user) {
+          setFavoriteIds(user.savedRecipes ?? []);
+        }
       } catch (error) {
         console.error('Error fetching recipes:', error);
       }
@@ -45,22 +53,33 @@ const HomePage = (): JSX.Element => {
     });
   }, []);
 
+  // Sort: Favorites first
+  const sortedRecipes = [...recipes].sort((a, b) => {
+    const aFav = favoriteIds.includes(a._id);
+    const bFav = favoriteIds.includes(b._id);
+    return Number(bFav) - Number(aFav); // true > false
+  });
+
   return (
-    <div className="bg-zinc-200 h-full">
+    <div className="bg-zinc-200 min-h-screen">
       <div className="p-10 grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-5">
-        {recipes.map(({ _id, title, steps, imageUrl, tags, author }) => (
+        {sortedRecipes.map(({ _id, title, steps, imageUrl, tags, author }) => (
           <RecipeCard
             key={_id}
             id={_id}
             title={title}
-            description={steps} // Using steps as the summary/description
+            description={steps}
             imageUrl={imageUrl}
             tags={tags}
             creator={author}
+            isFavorite={favoriteIds.includes(_id)}
+            onToggleFavorite ={(updatedFavorites: string[]) =>
+              setFavoriteIds(updatedFavorites)
+            }
           />
         ))}
       </div>
-      <div className="flex justify-center">
+      <div className="flex justify-center pb-10">
         <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
           <a href="/create-recipe">Create a New Recipe</a>
         </button>

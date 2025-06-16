@@ -3,6 +3,7 @@ interface LocalStorageUserProps {
   name: string;
   email: string;
   token: string;
+  savedRecipes?: string[];
 }
 
 interface CookbookCreatorProps {
