@@ -1,18 +1,17 @@
 import React from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
+import type { FormikHelpers } from 'formik';
 import { useNavigate } from 'react-router-dom';
-import { createRecipe } from '../../api'; // Make sure your API has createRecipe method
+import { createRecipe } from '../../api';
 import getUserFromLocalStorage from '../../utils/getUserFromLocalStorage';
 import { useNotificationContext } from '../../context/notificationContext';
 import * as Yup from 'yup';
-
-type SetSubmittingFunction = (value: boolean) => void;
 
 const validationSchema = Yup.object().shape({
   title: Yup.string().required('Title is required'),
   ingredients: Yup.string().required('Ingredients are required'),
   steps: Yup.string().required('Steps are required'),
-  tags: Yup.string(), // comma separated
+  tags: Yup.string(),
   imageUrl: Yup.string().url('Must be a valid URL'),
 });
 
@@ -30,7 +29,7 @@ const CreateRecipePage: React.FC = () => {
 
   const handleSubmit = async (
     values: typeof initialValues,
-    { setSubmitting }: { setSubmitting: SetSubmittingFunction }
+    { setSubmitting }: FormikHelpers<typeof initialValues>,
   ): Promise<void> => {
     try {
       const user = getUserFromLocalStorage();
@@ -44,73 +43,87 @@ const CreateRecipePage: React.FC = () => {
       });
 
       if (response.status === 201) {
-        setSubmitting(false);
         addNotification('success', response.data.message);
         navigate('/');
       } else {
         addNotification('error', response.data.message);
-        setSubmitting(false);
       }
     } catch (error) {
       console.error('Error:', error);
       addNotification('error', 'Something went wrong!');
+    } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-900 overflow-auto">
-      <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto h-screen">
-        <h2 className="mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
-          Create Recipe
+    <div className="bg-gray-50 dark:bg-gray-900 min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-xl bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+        <h2 className="text-2xl font-bold text-center text-gray-800 dark:text-white mb-6">
+          Create a New Recipe
         </h2>
-        <div className="w-full bg-white rounded-lg shadow dark:border sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-          <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
-            <Formik
-              initialValues={initialValues}
-              validationSchema={validationSchema}
-              onSubmit={handleSubmit}
-            >
-              {({ isSubmitting }) => (
-                <Form className="space-y-4 md:space-y-6">
-                  <div>
-                    <label htmlFor="title" className="form-label">Title</label>
-                    <Field name="title" type="text" className="form-input" />
-                    <ErrorMessage name="title" component="div" className="text-red-500" />
-                  </div>
 
-                  <div>
-                    <label htmlFor="ingredients" className="form-label">Ingredients (comma separated)</label>
-                    <Field name="ingredients" as="textarea" className="form-input" />
-                    <ErrorMessage name="ingredients" component="div" className="text-red-500" />
-                  </div>
+        <Formik
+          initialValues={initialValues}
+          validationSchema={validationSchema}
+          onSubmit={handleSubmit}
+        >
+          {({ isSubmitting }) => (
+            <Form className="space-y-6">
+              {[
+                { name: 'title', label: 'Title', type: 'text' },
+                {
+                  name: 'ingredients',
+                  label: 'Ingredients (comma separated)',
+                  as: 'textarea',
+                },
+                {
+                  name: 'steps',
+                  label: 'Steps',
+                  as: 'textarea',
+                },
+                {
+                  name: 'tags',
+                  label: 'Tags (optional, comma separated)',
+                  type: 'text',
+                },
+                {
+                  name: 'imageUrl',
+                  label: 'Image URL (optional)',
+                  type: 'text',
+                },
+              ].map(({ name, label, type = 'text', as }) => (
+                <div key={name}>
+                  <label
+                    htmlFor={name}
+                    className="block mb-1 text-sm font-medium text-gray-700 dark:text-gray-200"
+                  >
+                    {label}
+                  </label>
+                  <Field
+                    name={name}
+                    type={type}
+                    as={as}
+                    className="w-full px-4 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-900 dark:text-white dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <ErrorMessage
+                    name={name}
+                    component="div"
+                    className="text-sm text-red-500 mt-1"
+                  />
+                </div>
+              ))}
 
-                  <div>
-                    <label htmlFor="steps" className="form-label">Steps</label>
-                    <Field name="steps" as="textarea" className="form-input" />
-                    <ErrorMessage name="steps" component="div" className="text-red-500" />
-                  </div>
-
-                  <div>
-                    <label htmlFor="tags" className="form-label">Tags (optional, comma separated)</label>
-                    <Field name="tags" type="text" className="form-input" />
-                    <ErrorMessage name="tags" component="div" className="text-red-500" />
-                  </div>
-
-                  <div>
-                    <label htmlFor="imageUrl" className="form-label">Image URL (optional)</label>
-                    <Field name="imageUrl" type="text" className="form-input" />
-                    <ErrorMessage name="imageUrl" component="div" className="text-red-500" />
-                  </div>
-
-                  <button type="submit" disabled={isSubmitting} className="btn btn-primary w-full">
-                    {isSubmitting ? 'Submitting...' : 'Create Recipe'}
-                  </button>
-                </Form>
-              )}
-            </Formik>
-          </div>
-        </div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md transition"
+              >
+                {isSubmitting ? 'Submitting...' : 'Create Recipe'}
+              </button>
+            </Form>
+          )}
+        </Formik>
       </div>
     </div>
   );
